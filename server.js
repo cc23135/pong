@@ -45,7 +45,6 @@ setInterval(() => {
         ball.dx = -ball.dx; // Reverte a direção da bolinha
     }
 
-    // Verifica se a bolinha toca a parede vermelha
     if (ball.x <= wallX + 10) { // +10 é a largura da parede
         io.emit('gameOver');
         resetGame();
