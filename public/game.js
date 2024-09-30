@@ -10,6 +10,11 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+// Exibir a contagem regressiva antes do início do jogo
+socket.on('gameStarted', () => {
+    document.getElementById("warning").innerHTML = "START";
+});
+
 socket.on('update', ({ players, ball }) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -20,7 +25,7 @@ socket.on('update', ({ players, ball }) => {
     // Desenha os jogadores
     for (const id in players) {
         const player = players[id];
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = player.color; // Usa a cor atribuída ao jogador
         ctx.fillRect(50, player.y, 10, 100);
     }
 
@@ -31,8 +36,6 @@ socket.on('update', ({ players, ball }) => {
     ctx.fill();
 });
 
-
 socket.on('gameOver', () => {
-    alert('Game Over! A bolinha tocou a parede vermelha!');
-    location.reload(); // Reinicia o jogo
+    document.getElementById("warning").innerHTML = "GAME OVER";
 });

@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo Pong Multiplayer</title>
     <link rel="stylesheet" href="style.css">
-    
+
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game.js"></script>
+    <h1 id="warning" style="
+    color: white;
+    position: fixed;
+    top: 0px;
+    left: 20px;
+    ">5...4...3...2...1...</h1>
+
+    <button onclick="location.reload()" style="
+    position: fixed;
+    top: 100px;
+    left: 20px;
+    padding: 10px;
+    ">RELOAD</button>
 </body>
 </html>
