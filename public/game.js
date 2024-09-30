@@ -1,0 +1,38 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const socket = io();
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowUp') {
+        socket.emit('move', 'up');
+    } else if (event.key === 'ArrowDown') {
+        socket.emit('move', 'down');
+    }
+});
+
+socket.on('update', ({ players, ball }) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha a parede vermelha
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0, 0, 10, canvas.height); // Mova a parede para o lado esquerdo
+
+    // Desenha os jogadores
+    for (const id in players) {
+        const player = players[id];
+        ctx.fillStyle = 'white';
+        ctx.fillRect(50, player.y, 10, 100);
+    }
+
+    // Desenha a bolinha
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2); // Desenha a bolinha
+    ctx.fill();
+});
+
+
+socket.on('gameOver', () => {
+    alert('Game Over! A bolinha tocou a parede vermelha!');
+    location.reload(); // Reinicia o jogo
+});
