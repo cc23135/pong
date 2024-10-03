@@ -2,40 +2,98 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const socket = io();
 
+let movingUp = false;
+let movingDown = false;
+
+const updateMovement = () => {
+    if (movingUp) {
+        socket.emit('move', 'up');
+    } else if (movingDown) {
+        socket.emit('move', 'down');
+    }
+    requestAnimationFrame(updateMovement);
+};
+
+requestAnimationFrame(updateMovement);
+
 document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp') {
-        socket.emit('move', 'up');
+        movingUp = true;
     } else if (event.key === 'ArrowDown') {
-        socket.emit('move', 'down');
+        movingDown = true;
     }
 });
 
-// Exibir a contagem regressiva antes do início do jogo
-socket.on('gameStarted', () => {
-    document.getElementById("warning").innerHTML = "START";
+document.addEventListener('keyup', (event) => {
+    if (event.key === 'ArrowUp') {
+        movingUp = false;
+    } else if (event.key === 'ArrowDown') {
+        movingDown = false;
+    }
 });
+
+let countdown = null;
+
+socket.on('countdown', (counter) => {
+    countdown = counter;
+});
+
+socket.on('gameStarted', () => {});
 
 socket.on('update', ({ players, ball }) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Desenha a parede vermelha
     ctx.fillStyle = 'red';
-    ctx.fillRect(0, 0, 10, canvas.height); // Mova a parede para o lado esquerdo
+    ctx.fillRect(0, 0, 10, canvas.height);
 
-    // Desenha os jogadores
     for (const id in players) {
         const player = players[id];
-        ctx.fillStyle = player.color; // Usa a cor atribuída ao jogador
-        ctx.fillRect(50, player.y, 10, 100);
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, 10, player.size);
     }
 
-    // Desenha a bolinha
     ctx.fillStyle = 'white';
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2); // Desenha a bolinha
+    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
     ctx.fill();
+
+    if (countdown !== null) {
+        const fontSize = 48 + (Math.sin(Date.now() / 100) * 20); // Tamanho oscilante
+        ctx.fillStyle = 'white';
+        ctx.font = `${fontSize}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
+
+        if (countdown === 0) {
+            countdown = null; // Limpar o contador após o término
+        }
+    }
 });
 
+gameOverVar = false
+
 socket.on('gameOver', () => {
-    document.getElementById("warning").innerHTML = "GAME OVER";
+    gameOverVar = true
+    //gameOver()
 });
+
+function gameOver(){
+    if(gameOverVar == true)
+    {
+        gameOverVar = false
+        
+    let counter = 5;
+    const countdownElement = document.getElementById('countdown');
+
+    const interval = setInterval(() => {
+        countdownElement.textContent = counter;
+        counter--;
+
+        if (counter < 0) {
+            clearInterval(interval);
+            countdownElement.textContent = ''; // Limpar após o término
+        }
+    }, 1000);
+
+    }
+}

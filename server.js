@@ -9,33 +9,52 @@ const io = socketIo(server);
 app.use(express.static('public'));
 
 let players = {};
-let ball = { x: 400, y: 300, dx: 5, dy: 3 }; // Posição e velocidade da bolinha
-const wallX = 10; // X da parede vermelha
+let ball = { x: 400, y: 300, dx: 5, dy: 3 };
+const wallX = 10;
 let gameStarted = false;
 
-// Cores para os jogadores
-const colors = ['red', 'green', 'blue', 'yellow', 'purple']; // Adicione mais cores se necessário
+const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
 
 io.on('connection', (socket) => {
-    
-    // Atribui uma cor ao jogador
     const playerColor = colors[Object.keys(players).length % colors.length];
-    players[socket.id] = { id: socket.id, y: 250, color: playerColor };
+    const playerX = 50 + Object.keys(players).length * 30;
+
+    players[socket.id] = { 
+        id: socket.id,
+        x: playerX,
+        y: 250,
+        color: playerColor,
+        size: 300 / (Object.keys(players).length + 1),
+        speed: 10
+    };
+
+    reorganizePlayers();
 
     socket.on('disconnect', () => {
         delete players[socket.id];
+        reorganizePlayers();
     });
 
     socket.on('move', (direction) => {
-        if (direction === 'up' && players[socket.id].y > 0) {
-            players[socket.id].y -= 10;
-        } else if (direction === 'down' && players[socket.id].y < 500) {
-            players[socket.id].y += 10;
+        const player = players[socket.id];
+        if (direction === 'up' && player.y > 0) {
+            player.y -= player.speed;
+        } else if (direction === 'down' && player.y < 600 - player.size) {
+            player.y += player.speed;
         }
     });
 });
 
-// Função para iniciar o jogo após 5 segundos
+function reorganizePlayers() {
+    const playerSize = 300 / (Object.keys(players).length);
+    let playerX = 50;
+    for (const id in players) {
+        players[id].size = playerSize;
+        players[id].x = playerX;
+        playerX += 30;
+    }
+}
+
 function startGame() {
     setTimeout(() => {
         gameStarted = true;
@@ -43,53 +62,54 @@ function startGame() {
     }, 5000);
 }
 
+function checkCollision(player, ball) {
+    return (
+        ball.x - 10 < player.x + 10 && 
+        ball.x + 10 > player.x &&
+        ball.y + 10 > player.y && 
+        ball.y - 10 < player.y + player.size
+    );
+}
+
 setInterval(() => {
     if (gameStarted) {
-        // Atualiza a posição da bolinha
         ball.x += ball.dx;
         ball.y += ball.dy;
 
-        // Colisão com o topo e fundo
         if (ball.y <= 0 || ball.y >= 600) {
-            ball.dy = -ball.dy; // Reverte a direção da bolinha
+            ball.dy = -ball.dy;
         }
 
         if (ball.x <= 0 || ball.x >= 800) {
-            ball.dx = -ball.dx; // Reverte a direção da bolinha
+            ball.dx = -ball.dx;
         }
 
-        // Verifica se a bolinha toca a parede vermelha
-        if (ball.x <= wallX + 10) { // +10 é a largura da parede
+        if (ball.x <= wallX + 10) {
             io.emit('gameOver');
-            ball.dx = 0
-            ball.dy = 0
+            ball.dx = 0;
+            ball.dy = 0;
             setTimeout(() => {
                 resetGame();
             }, 5000);
         }
 
-        // Verifica colisão com os jogadores
         for (const id in players) {
             const player = players[id];
-            if (
-                ball.x <= 50 + 10 && // posição da barra do jogador
-                ball.x >= 50 && // posição da barra do jogador
-                ball.y >= player.y && 
-                ball.y <= player.y + 100 // altura da barra do jogador
-            ) {
-                ball.dx = -ball.dx; // Inverte a direção da bolinha ao colidir com o jogador
+            if (checkCollision(player, ball)) {
+                ball.dx = -ball.dx;
             }
         }
+        
 
         io.emit('update', { players, ball });
     }
 }, 1000 / 60);
 
-// Chama a função para iniciar o jogo
 startGame();
 
 function resetGame() {
-    ball = { x: getRandomInt(400,700), y: getRandomInt(100,600), dx: 3, dy: 4 };
+    ball = { x: getRandomInt(400, 700), y: getRandomInt(100, 600), dx: 3, dy: 4 };
+    reorganizePlayers();
 }
 
 function getRandomInt(x, y) {
@@ -99,5 +119,5 @@ function getRandomInt(x, y) {
 }
 
 server.listen(3000, () => {
-    console.log('--- V: 1.2 ----------------------------');
+    console.log('--- V: 1.3 ----------------------------');
 });

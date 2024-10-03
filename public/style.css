@@ -10,3 +10,18 @@ body {
 canvas {
     border: 1px solid white;
 }
+
+#countdown {
+    font-family: 'Arial', sans-serif;
+    font-size: 100px;
+    color: white;
+    text-align: center;
+    animation: pulse 1s infinite ease-in-out;
+    position: fixed;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
